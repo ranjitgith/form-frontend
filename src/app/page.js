@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from "react";
 import validation from "./utils/validation";
 import Table from "../components/Table";
-import { getUserData, postUserData } from "./utils/fetchApi";
+import {
+  getUserData,
+  postUserData,
+  updateUserData,
+  deleteUserData,
+} from "./utils/fetchApi"
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -17,6 +22,7 @@ const Page = () => {
   });
   const [errorMsg, setErrorMsg] = useState({});
   const [fetchedData, setFetchedData] = useState([]);
+  const [isEdit, setIsEdit] = useState();
 
   const handleUser = (e) => {
     const { value, name, type, checked } = e.target;
@@ -33,11 +39,39 @@ const Page = () => {
     }
   };
 
+  // Function to scroll to the top
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // This makes the scrolling smooth
+    });
+  };
+
   // function to clear errorMsg after 3 sec
   const clearError = () => {
     setTimeout(() => {
       setErrorMsg({});
     }, 3000);
+  };
+
+  // function to handle edit button
+  const editHandler = (event) => {
+    const { id } = event.target;
+    const userToEdit = fetchedData.find((data) => data._id === id);
+    delete userToEdit._id;
+    setData(userToEdit);
+    setIsEdit(id);
+    scrollToTop();
+  };
+
+  // function to handle delete button
+  const deleteHandler = async (event) => {
+    const { id } = event.target;
+    const res = await deleteUserData(id);
+    if (res.acknowledged && res.deletedCount) {
+      toast("Student Deleted Successfully");
+      getUserData().then((data) => setFetchedData(data));
+    }
   };
 
   const handleSubmit = async () => {
@@ -56,18 +90,28 @@ const Page = () => {
     const errorMsgArr = Object.entries(errorMsgObj);
 
     errorMsgArr.map(([key, value]) => {
-      if (value !== "") {
+      if (value !== "" && key !== "_id") {
         isValid = false;
         return;
       }
     });
 
     if (isValid) {
-      const res = await postUserData(data);
-      if (res.acknowledged && res.insertedId) {
-        toast("Successfully inserted");
-        getUserData().then((data) => setFetchedData(data));
+      if (isEdit) {
+        const res = await updateUserData(isEdit, data);
+        if (res.acknowledged && res.modifiedCount) {
+          toast("Student Updated Successfully");
+          getUserData().then((data) => setFetchedData(data));
+          setIsEdit("");
+        }
+      } else {
+        const res = await postUserData(data);
+        if (res.acknowledged && res.insertedId) {
+          toast("Student Added");
+          getUserData().then((data) => setFetchedData(data));
+        }
       }
+
       setData({
         uid: "",
         pwd: "",
@@ -298,13 +342,14 @@ const Page = () => {
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               onClick={handleSubmit}
             >
-              Register
+              {isEdit ? "Update" : " Register"}
             </button>
           </div>
         </div>
       </div>
 
       {/* student list section */}
+
       <div className="student-list my-4">
         <h2 className="text-center font-bold text-3xl my-3">Students List</h2>
         {fetchedData.length > 0 ? (
@@ -312,6 +357,8 @@ const Page = () => {
             head={["Email", "Gender", "Hobbies", "Country", "Address"]}
             row={["uid", "gender", "Hobbies", "cnty", "address"]}
             data={fetchedData}
+            editHandler={editHandler}
+            deleteHandler={deleteHandler}
           />
         ) : (
           <h1 className="text-white text-bold text-xl text-center mt-5">
@@ -328,4 +375,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default Page;
