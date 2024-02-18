@@ -352,7 +352,7 @@ const Page = () => {
 
       <div className="student-list my-4">
         <h2 className="text-center font-bold text-3xl my-3">Students List</h2>
-        {fetchedData.length > 0 ? (
+        {fetchedData?.length > 0 ? (
           <Table
             head={["Email", "Gender", "Hobbies", "Country", "Address"]}
             row={["uid", "gender", "Hobbies", "cnty", "address"]}
