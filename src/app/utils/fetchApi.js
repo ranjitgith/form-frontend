@@ -1,6 +1,6 @@
 "use client";
 
-const baseUrl = "https://form-backend-drab.vercel.app/";
+const baseUrl = "https://form-backend-drab.vercel.app";
 
 export const getUserData = async () => {
   try {
